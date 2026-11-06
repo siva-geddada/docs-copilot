@@ -7,6 +7,7 @@ interface Turn {
   question: string;
   answer: string;
   sources: Source[];
+  cited: boolean;
   status: 'streaming' | 'done' | 'error';
 }
 
@@ -46,7 +47,7 @@ export default function Home() {
 
     setBusy(true);
     setQuestion('');
-    setTurns((all) => [...all, { question: trimmed, answer: '', sources: [], status: 'streaming' }]);
+    setTurns((all) => [...all, { question: trimmed, answer: '', sources: [], cited: true, status: 'streaming' }]);
 
     try {
       const response = await fetch('/api/chat', {
@@ -76,7 +77,7 @@ export default function Home() {
           const event = JSON.parse(line) as AnswerEvent | { type: 'error'; error: string };
 
           if (event.type === 'text') update((t) => ({ ...t, answer: t.answer + event.text }));
-          else if (event.type === 'done') update((t) => ({ ...t, sources: event.sources, status: 'done' }));
+          else if (event.type === 'done') update((t) => ({ ...t, sources: event.sources, cited: event.cited, status: 'done' }));
           else throw new Error(event.error);
         }
         bottom.current?.scrollIntoView({ block: 'end' });
@@ -118,6 +119,10 @@ export default function Home() {
             <div className={`answer ${turn.status}`}>
               {turn.answer ? withCitations(turn.answer, turn.sources) : 'Searching the docs…'}
             </div>
+
+            {turn.sources.length > 0 && !turn.cited && (
+              <p className="uncited">No source was cited for this answer, so check it. These sections are the closest match:</p>
+            )}
 
             {turn.sources.length > 0 && (
               <ol className="sources" aria-label="Sources">

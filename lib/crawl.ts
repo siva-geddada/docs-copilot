@@ -17,6 +17,9 @@ export interface CrawledPage extends Page {
   url: string;
 }
 
+/** `/docs` and `/docs/` are nearly always one page, so they share a key. */
+export const pageKey = (url: string) => url.replace(/\/$/, '');
+
 /** Drops fragments and queries, so one page is never fetched twice. */
 export function normalizeUrl(href: string) {
   const url = new URL(href);
@@ -81,7 +84,7 @@ export async function crawl(start: string, options: CrawlOptions = {}) {
   const disallowed = [...(await loadRobots(origin)), ...exclude];
 
   const queue = [startUrl];
-  const seen = new Set(queue);
+  const seen = new Set(queue.map(pageKey));
   const pages: CrawledPage[] = [];
 
   while (queue.length > 0 && seen.size <= maxPages + queue.length) {
@@ -115,8 +118,8 @@ export async function crawl(start: string, options: CrawlOptions = {}) {
       }
       if (next.origin !== origin || !/^https?:$/.test(next.protocol)) continue;
       if (SKIP_FILES.test(next.pathname) || !isAllowed(next.pathname, disallowed)) continue;
-      if (!seen.has(next.href)) {
-        seen.add(next.href);
+      if (!seen.has(pageKey(next.href))) {
+        seen.add(pageKey(next.href));
         queue.push(next.href);
       }
     }

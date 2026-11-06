@@ -1,10 +1,10 @@
 import { PGlite } from '@electric-sql/pglite';
 import { vector } from '@electric-sql/pglite-pgvector';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { buildMessages, citedSources, fitContext, NOT_FOUND, sourceUrl } from '../lib/answer';
+import { buildMessages, citedSources, closestSources, fitContext, NOT_FOUND, sourceUrl } from '../lib/answer';
 import type { Chunk } from '../lib/chunk';
 import { config } from '../lib/config';
-import { isAllowed, normalizeUrl, parseRobots } from '../lib/crawl';
+import { isAllowed, normalizeUrl, pageKey, parseRobots } from '../lib/crawl';
 import { countChunks, replaceChunks, searchKeyword, searchVector, type VectorRow } from '../lib/db';
 import { fuse, type Hit } from '../lib/search';
 
@@ -46,6 +46,10 @@ describe('citations', () => {
     expect(citedSources('A claim [7].', hits)).toEqual([]);
   });
 
+  it('offers the closest sections for an uncited answer', () => {
+    expect(closestSources(hits, 2).map((s) => s.number)).toEqual([1, 2]);
+  });
+
   it('links to the exact section when there is an anchor', () => {
     expect(sourceUrl({ url: 'https://d.test/a/', anchor: 'setup' })).toBe('https://d.test/a/#setup');
     expect(sourceUrl({ url: 'https://d.test/a/', anchor: null })).toBe('https://d.test/a/');
@@ -75,6 +79,10 @@ describe('fitContext', () => {
 describe('crawl helpers', () => {
   it('treats fragments and queries as the same page', () => {
     expect(normalizeUrl('https://d.test/a/?x=1#top')).toBe('https://d.test/a/');
+  });
+
+  it('treats a trailing slash as the same page', () => {
+    expect(pageKey('https://d.test/docs/')).toBe(pageKey('https://d.test/docs'));
   });
 
   it('reads robots rules for all crawlers only', () => {

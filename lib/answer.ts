@@ -13,7 +13,8 @@ export interface Source {
 
 export type AnswerEvent =
   | { type: 'text'; text: string }
-  | { type: 'done'; sources: Source[] };
+  /** `cited` is false when the model named no source, so these are only the closest matches. */
+  | { type: 'done'; sources: Source[]; cited: boolean };
 
 const SYSTEM = `You answer questions using only the numbered sources you are given.
 
@@ -48,6 +49,10 @@ export function buildMessages(question: string, hits: Hit[]): ChatMessage[] {
   ];
 }
 
+/** The closest matches, for an answer that didn't cite anything. */
+export const closestSources = (hits: Hit[], count = 3): Source[] =>
+  hits.slice(0, count).map((hit, i) => ({ number: i + 1, title: hit.title, heading: hit.heading, url: sourceUrl(hit) }));
+
 /** Keeps only the sources the answer really cited, ignoring numbers that don't exist. */
 export function citedSources(answer: string, hits: Hit[]): Source[] {
   const numbers = new Set([...answer.matchAll(/\[(\d+)\]/g)].map((match) => Number(match[1])));
@@ -66,7 +71,7 @@ export async function* answerQuestion(question: string, signal?: AbortSignal): A
   // With nothing relevant to read, the model isn't even asked, so it can't make something up.
   if (hits.length === 0) {
     yield { type: 'text', text: NOT_FOUND };
-    yield { type: 'done', sources: [] };
+    yield { type: 'done', sources: [], cited: false };
     return;
   }
 
@@ -76,5 +81,10 @@ export async function* answerQuestion(question: string, signal?: AbortSignal): A
     yield { type: 'text', text };
   }
 
-  yield { type: 'done', sources: citedSources(answer, hits) };
+  const cited = citedSources(answer, hits);
+  const refused = answer.includes("I don't know");
+
+  // Small models sometimes forget to cite. The reader should still get somewhere to check.
+  if (cited.length === 0 && !refused) yield { type: 'done', sources: closestSources(hits), cited: false };
+  else yield { type: 'done', sources: cited, cited: true };
 }

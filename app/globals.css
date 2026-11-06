@@ -96,6 +96,8 @@ h1 {
   border-top: 1.5px dashed var(--line);
 }
 
+.uncited { margin: 12px 0 0; font-size: 0.9rem; color: var(--muted); }
+
 .sources a { color: var(--link); overflow-wrap: anywhere; }
 
 .composer {

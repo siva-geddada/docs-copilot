@@ -110,18 +110,27 @@ Both sets ask about the blog this was built on, so write your own for another si
 
 ## Results
 
-On a blog of 20 pages and 202 sections, using `qwen3.5:4b`:
+All tests used `qwen3.5:4b`.
 
-| Set | Before fixes | After fixes |
-| --- | --- | --- |
-| Tuning set | 12 of 14 | 14 of 14 |
-| Unseen set | Not run | 14 of 14 |
+| Test | Result |
+| --- | --- |
+| My blog, tuning set | 14 of 14 (12 of 14 before fixes) |
+| My blog, questions never tuned on | 14 of 14 |
+| [Hono docs](https://hono.dev/docs), 30 pages, new questions | 11 of 12 |
+| Injected instructions in page text | Resisted 7 of 7 |
 
-These are small sets that I wrote myself, so they show the system works, not that it's perfect.
+The cutoff measured on my blog carried over to the Hono docs: real questions scored 0.66 to 0.84, and unrelated ones 0.50 to 0.58.
+
+The one Hono failure was a search miss. The section exists, but search didn't rank it high enough, so it said "I don't know". I left that in place, because tuning for a single question would only hide the weakness.
+
+These are small sets that I wrote myself, so they show the system works, not that it's perfect. The injection attacks were simple ones, so don't treat that as proof it can't be tricked.
 
 ## Limits
 
 - **Small models make mistakes.** Check the sources for anything important.
+- **Search can miss.** A section can exist and still not rank in the top results. Use `npm run inspect` to check.
+- **Models sometimes forget to cite.** The app then shows the closest sections, and says that nothing was cited.
+- **It trusts the site's content.** Hidden text is removed, but a false statement in visible text will be repeated, so only index sites you trust.
 - **One site at a time.** Each `ingest` replaces the index.
 - **Single-server.** PGlite and the rate limiter suit one process. For more, move to hosted PostgreSQL. The SQL is the same.
 - **No chat history.** Each question stands alone.

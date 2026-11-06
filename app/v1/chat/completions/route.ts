@@ -24,14 +24,16 @@ export async function POST(request: Request) {
 
   let answer = '';
   let sources: Source[] = [];
+  let cited = true;
 
   for await (const event of answerQuestion(question, request.signal)) {
     if (event.type === 'text') answer += event.text;
-    else sources = event.sources;
+    else ({ sources, cited } = event);
   }
 
   const list = sources.map((source) => `[${source.number}] ${source.url}`).join('\n');
-  const content = list ? `${answer}\n\nSources:\n${list}` : answer;
+  const label = cited ? 'Sources' : 'Uncited, closest matches';
+  const content = list ? `${answer}\n\n${label}:\n${list}` : answer;
 
   return Response.json({ choices: [{ message: { role: 'assistant', content } }] });
 }
