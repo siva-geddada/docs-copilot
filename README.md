@@ -30,6 +30,9 @@ You need Node.js 24 and [Ollama](https://ollama.com).
 ```bash
 ollama pull nomic-embed-text
 ollama pull qwen3.5:4b
+
+git clone https://github.com/siva-geddada/docs-copilot.git
+cd docs-copilot
 npm install
 ```
 
