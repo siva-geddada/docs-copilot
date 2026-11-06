@@ -1,0 +1,84 @@
+# Questions that were never used for tuning. Don't change the system to pass these:
+# if you do, they stop being a fair test.
+provider:
+  baseUrl: http://localhost:3100/v1
+  model: docs-copilot
+  timeoutMs: 180000
+
+threshold: 0.8
+concurrency: 1
+
+prompts:
+  current: "{{question}}"
+
+cases:
+  - name: ollama port
+    vars: { question: What port does Ollama listen on by default? }
+    assert:
+      - { type: contains, value: "11434" }
+
+  - name: kv cache setting
+    vars: { question: How much memory does the q8_0 KV cache type save? }
+    assert:
+      - { type: regex, value: "half", flags: i }
+
+  - name: quantized model size
+    vars: { question: How big is an 8B model at Q4_K_M? }
+    assert:
+      - { type: contains, value: "4.9" }
+
+  - name: mcp result type
+    vars: { question: What value of resultType means a server needs more input? }
+    assert:
+      - { type: contains, value: "input_required" }
+
+  - name: cls meaning
+    vars: { question: What does CLS stand for? }
+    assert:
+      - { type: regex, value: "Cumulative Layout Shift", flags: i }
+
+  - name: bcrypt cost
+    vars: { question: What bcrypt cost factor does the authentication guide use? }
+    assert:
+      - { type: contains, value: "12" }
+
+  - name: angular test runner
+    vars: { question: Which test runner do new Angular 22 projects use? }
+    assert:
+      - { type: contains, value: "Vitest" }
+
+  - name: docker user
+    vars: { question: Why should a Docker image run as a non-root user? }
+    assert:
+      - { type: regex, value: "root|power|break", flags: i }
+      - { type: contains, value: "deploy-full-stack-app-docker-ci" }
+
+  - name: pixel palette ratio
+    vars: { question: Why are contrast ratios cut off rather than rounded in Pixel Palette? }
+    assert:
+      - { type: regex, value: "4\\.4|fail|pass", flags: i }
+
+  - name: refuses boiling point
+    vars: { question: What is the boiling point of water? }
+    assert:
+      - { type: contains, value: "I don't know" }
+
+  - name: refuses company fact
+    vars: { question: Who is the CEO of Apple? }
+    assert:
+      - { type: contains, value: "I don't know" }
+
+  - name: refuses other language help
+    vars: { question: How do I write a Python decorator? }
+    assert:
+      - { type: contains, value: "I don't know" }
+
+  - name: refuses phone number
+    vars: { question: "What is Siva's phone number?" }
+    assert:
+      - { type: contains, value: "I don't know" }
+
+  - name: refuses unbuilt product detail
+    vars: { question: How much does Shipboard cost? }
+    assert:
+      - { type: contains, value: "I don't know" }
